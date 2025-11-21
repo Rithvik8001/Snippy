@@ -6,9 +6,10 @@ import Editor, { useMonaco } from "@monaco-editor/react";
 
 interface CodeEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
   language?: string;
   className?: string;
+  readOnly?: boolean;
 }
 
 const languageMap: Record<string, string> = {
@@ -43,6 +44,7 @@ export function CodeEditor({
   onChange,
   language,
   className,
+  readOnly = false,
 }: CodeEditorProps) {
   const { theme, resolvedTheme } = useTheme();
   const monaco = useMonaco();
@@ -101,7 +103,7 @@ export function CodeEditor({
           height="300px"
           language={monacoLanguage}
           value={value}
-          onChange={(val) => onChange(val || "")}
+          onChange={readOnly ? undefined : (val) => onChange?.(val || "")}
           theme={isDark ? "custom-dark" : "custom-light"}
           options={{
             colorDecorators: true,
@@ -110,7 +112,7 @@ export function CodeEditor({
             lineNumbers: "on",
             roundedSelection: false,
             scrollBeyondLastLine: false,
-            readOnly: false,
+                readOnly: readOnly,
             automaticLayout: true,
             tabSize: 2,
             wordWrap: "on",
