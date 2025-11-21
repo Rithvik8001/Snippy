@@ -1,20 +1,19 @@
-import { SignUp } from "@clerk/nextjs";
+import { SignUpWrapper } from "@/components/auth/sign-up-wrapper";
+import { currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  const user = await currentUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="mx-auto max-w-5xl border-x border-border">
         <div className="flex min-h-screen items-center justify-center px-8">
-          <SignUp
-            routing="path"
-            path="/sign-up"
-            appearance={{
-              elements: {
-                rootBox: "mx-auto",
-                card: "border border-border shadow-lg",
-              },
-            }}
-          />
+          <SignUpWrapper />
         </div>
       </div>
     </div>

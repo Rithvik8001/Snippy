@@ -10,7 +10,6 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="px-6">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo/Brand */}
           <Link
             href="/"
             className="group flex items-center gap-2 font-semibold text-foreground transition-all duration-300 hover:text-primary"
@@ -26,7 +25,6 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Actions */}
           <div className="flex items-center gap-3">
             <ModeToggle />
             <div className="hidden items-center gap-2 sm:flex">
@@ -46,7 +44,6 @@ export function Navbar() {
                 <Link href="/sign-up">Get Started</Link>
               </Button>
             </div>
-            {/* Mobile menu button - can be expanded later */}
             <div className="sm:hidden">
               <Button
                 asChild
