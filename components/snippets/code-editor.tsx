@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Editor, { useMonaco } from "@monaco-editor/react";
 
 interface CodeEditorProps {
@@ -48,6 +48,7 @@ export function CodeEditor({
 }: CodeEditorProps) {
   const { theme, resolvedTheme } = useTheme();
   const monaco = useMonaco();
+  const editorRef = useRef<{ dispose: () => void } | null>(null);
 
   const isDark = resolvedTheme === "dark" || theme === "dark";
 
@@ -57,41 +58,81 @@ export function CodeEditor({
 
   useEffect(() => {
     if (monaco) {
-      monaco.editor.defineTheme("custom-dark", {
-        base: "vs-dark",
-        inherit: true,
-        rules: [],
-        colors: {
-          "editor.background": "#0a0a0a",
-          "editorWidget.background": "#1a1a1a",
-          "editorWidget.border": "#2a2a2a",
-          "dropdown.background": "#1a1a1a",
-          "dropdown.border": "#2a2a2a",
-          "list.background": "#1a1a1a",
-          "list.hoverBackground": "#2a2a2a",
-          "input.background": "#1a1a1a",
-          "input.border": "#2a2a2a",
-        },
-      });
+      try {
+        monaco.editor.defineTheme("custom-dark", {
+          base: "vs-dark",
+          inherit: true,
+          rules: [],
+          colors: {
+            "editor.background": "#0a0a0a",
+            "editorWidget.background": "#1a1a1a",
+            "editorWidget.border": "#2a2a2a",
+            "dropdown.background": "#1a1a1a",
+            "dropdown.border": "#2a2a2a",
+            "list.background": "#1a1a1a",
+            "list.hoverBackground": "#2a2a2a",
+            "input.background": "#1a1a1a",
+            "input.border": "#2a2a2a",
+          },
+        });
 
-      monaco.editor.defineTheme("custom-light", {
-        base: "vs",
-        inherit: true,
-        rules: [],
-        colors: {
-          "editor.background": "#ffffff",
-        },
-      });
+        monaco.editor.defineTheme("custom-light", {
+          base: "vs",
+          inherit: true,
+          rules: [],
+          colors: {
+            "editor.background": "#ffffff",
+          },
+        });
+      } catch (error) {
+        // Ignore cancellation errors during theme definition
+        if (
+          error &&
+          typeof error === "object" &&
+          "type" in error &&
+          (error as { type?: string }).type === "cancelation"
+        ) {
+          return;
+        }
+        console.warn("Error defining Monaco themes:", error);
+      }
     }
   }, [monaco]);
 
   useEffect(() => {
-    if (monaco && isDark) {
-      monaco.editor.setTheme("custom-dark");
-    } else if (monaco && !isDark) {
-      monaco.editor.setTheme("custom-light");
+    if (monaco) {
+      try {
+        if (isDark) {
+          monaco.editor.setTheme("custom-dark");
+        } else {
+          monaco.editor.setTheme("custom-light");
+        }
+      } catch (error) {
+        // Ignore cancellation errors during theme setting
+        if (
+          error &&
+          typeof error === "object" &&
+          "type" in error &&
+          (error as { type?: string }).type === "cancelation"
+        ) {
+          return;
+        }
+      }
     }
   }, [monaco, isDark]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (editorRef.current) {
+        try {
+          editorRef.current.dispose();
+        } catch (error) {
+          // Ignore errors during cleanup
+        }
+      }
+    };
+  }, []);
 
   return (
     <div className={className} style={{ position: "relative", zIndex: 1 }}>
@@ -104,6 +145,9 @@ export function CodeEditor({
           language={monacoLanguage}
           value={value}
           onChange={readOnly ? undefined : (val) => onChange?.(val || "")}
+          onMount={(editor) => {
+            editorRef.current = editor;
+          }}
           theme={isDark ? "custom-dark" : "custom-light"}
           options={{
             colorDecorators: true,
