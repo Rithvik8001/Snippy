@@ -315,3 +315,54 @@ export async function copySnippet(snippetId: string) {
     return success({ id: snippetId });
   }
 }
+
+export async function toggleFavorite(snippetId: string) {
+  try {
+    let userId: string;
+    try {
+      userId = await getCurrentUserId();
+    } catch {
+      throw new AuthenticationError("You must be logged in to toggle favorites");
+    }
+
+    // Check if snippet exists and belongs to user
+    const existingSnippet = await db
+      .select({ isFavorite: snippets.isFavorite })
+      .from(snippets)
+      .where(and(eq(snippets.id, snippetId), eq(snippets.userId, userId)))
+      .limit(1)
+      .then((results) => results[0] || null);
+
+    if (!existingSnippet) {
+      throw new NotFoundError("Snippet not found or you don't have permission to modify it");
+    }
+
+    try {
+      await db
+        .update(snippets)
+        .set({
+          isFavorite: !existingSnippet.isFavorite,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(snippets.id, snippetId), eq(snippets.userId, userId)));
+    } catch (dbError) {
+      console.error("Database update error:", dbError);
+      throw new DatabaseError(
+        "Failed to update favorite status. Please try again.",
+        dbError
+      );
+    }
+
+    try {
+      revalidatePath("/dashboard");
+      revalidatePath("/dashboard/snippets");
+      revalidatePath(`/dashboard/snippets/${snippetId}`);
+    } catch (revalidateError) {
+      console.warn("Failed to revalidate paths:", revalidateError);
+    }
+
+    return success({ id: snippetId, isFavorite: !existingSnippet.isFavorite });
+  } catch (err) {
+    return handleError(err);
+  }
+}

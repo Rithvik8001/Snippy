@@ -15,6 +15,7 @@ import { CodeEditor } from "@/components/snippets/code-editor";
 import { Star, Edit, Calendar, Clock } from "lucide-react";
 import Link from "next/link";
 import { CopyButton } from "@/components/snippets/copy-button";
+import { FavoriteButton } from "@/components/snippets/favorite-button";
 
 interface SnippetDetailPageProps {
   params: Promise<{
@@ -31,15 +32,62 @@ export default async function SnippetDetailPage({
     redirect("/sign-in");
   }
 
-  const { id } = await params;
-  const snippet = await getSnippetById(user.id, id);
+  let id: string;
+  let snippet: NonNullable<Awaited<ReturnType<typeof getSnippetById>>>;
 
-  if (!snippet) {
+  try {
+    const resolvedParams = await params;
+    id = resolvedParams.id;
+    
+    if (!id || typeof id !== "string") {
+      notFound();
+    }
+
+    const fetchedSnippet = await getSnippetById(user.id, id);
+
+    if (!fetchedSnippet) {
+      notFound();
+    }
+
+    snippet = fetchedSnippet;
+  } catch (error) {
+    // Ignore React cancellation errors (these are expected during navigation)
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "cancelation"
+    ) {
+      // This is a React cancellation - expected during navigation, ignore it
+      throw error; // Re-throw to let React handle it
+    }
+
+    console.error("Error loading snippet:", error);
+    // Log the full error for debugging
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
     notFound();
   }
 
   const contentToDisplay =
     snippet.type === "command" ? snippet.command : snippet.content;
+
+  // Ensure isFavorite is always a boolean
+  const isFavorite = Boolean(snippet.isFavorite ?? false);
+
+  // Helper function to safely format dates
+  const formatDate = (date: Date | string | null | undefined): string => {
+    if (!date) return "Unknown";
+    try {
+      const dateObj = typeof date === "string" ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return "Invalid Date";
+      return dateObj.toLocaleDateString();
+    } catch {
+      return "Unknown";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -47,7 +95,7 @@ export default async function SnippetDetailPage({
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold tracking-tight">{snippet.title}</h1>
-            {snippet.isFavorite && (
+            {isFavorite && (
               <Star className="size-5 fill-yellow-500 text-yellow-500" />
             )}
           </div>
@@ -62,6 +110,11 @@ export default async function SnippetDetailPage({
           </p>
         </div>
         <div className="flex gap-2">
+          <FavoriteButton
+            snippetId={id}
+            isFavorite={isFavorite}
+            variant="outline"
+          />
           <Button variant="outline" asChild>
             <Link href={`/dashboard/snippets/${id}/edit`}>
               <Edit className="mr-2 size-4" />
@@ -144,9 +197,7 @@ export default async function SnippetDetailPage({
                   Created
                 </span>
                 <span className="font-medium">
-                  {snippet.createdAt
-                    ? new Date(snippet.createdAt).toLocaleDateString()
-                    : "Unknown"}
+                  {formatDate(snippet.createdAt)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -155,16 +206,14 @@ export default async function SnippetDetailPage({
                   Updated
                 </span>
                 <span className="font-medium">
-                  {snippet.updatedAt
-                    ? new Date(snippet.updatedAt).toLocaleDateString()
-                    : "Never"}
+                  {formatDate(snippet.updatedAt) || "Never"}
                 </span>
               </div>
               {snippet.lastUsedAt && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Last Used</span>
                   <span className="font-medium">
-                    {new Date(snippet.lastUsedAt).toLocaleDateString()}
+                    {formatDate(snippet.lastUsedAt)}
                   </span>
                 </div>
               )}
