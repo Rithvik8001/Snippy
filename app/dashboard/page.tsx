@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSnippetStats, getRecentSnippets } from "@/lib/db/snippets";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { SnippetsGrid } from "@/components/snippets/snippets-grid";
 import {
   Code2,
   FileText,
@@ -12,13 +13,6 @@ import {
   Clock,
   Plus,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -110,72 +104,17 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {recentSnippets.length === 0 ? (
-          <EmptyState
-            title="No snippets yet"
-            description="Create your first snippet to get started. Save code, text, or commands for quick access."
-            actionLabel="Create Your First Snippet"
-            actionHref="/dashboard/snippets/new"
-          />
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {recentSnippets.map((snippet) => (
-              <Link key={snippet.id} href={`/dashboard/snippets/${snippet.id}`}>
-                <Card className="transition-all duration-300 hover:shadow-md cursor-pointer h-full">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">
-                          {snippet.title}
-                        </CardTitle>
-                        <CardDescription className="mt-1">
-                          {snippet.type.charAt(0).toUpperCase() +
-                            snippet.type.slice(1)}
-                          {snippet.type === "code" && snippet.language && (
-                            <span className="ml-2">• {snippet.language}</span>
-                          )}
-                        </CardDescription>
-                      </div>
-                      {snippet.isFavorite && (
-                        <Star className="size-4 fill-yellow-500 text-yellow-500" />
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>
-                        Used {snippet.useCount}{" "}
-                        {snippet.useCount === 1 ? "time" : "times"}
-                      </span>
-                      <span>
-                        {snippet.updatedAt
-                          ? new Date(snippet.updatedAt).toLocaleDateString()
-                          : "Never"}
-                      </span>
-                    </div>
-                    {snippet.tags.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        {snippet.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {snippet.tags.length > 3 && (
-                          <span className="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium">
-                            +{snippet.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
+        <SnippetsGrid
+          snippets={recentSnippets}
+          emptyState={
+            <EmptyState
+              title="No snippets yet"
+              description="Create your first snippet to get started. Save code, text, or commands for quick access."
+              actionLabel="Create Your First Snippet"
+              actionHref="/dashboard/snippets/new"
+            />
+          }
+        />
       </div>
     </div>
   );

@@ -62,6 +62,19 @@ export async function getRecentSnippets(userId: string, limit = 5) {
   );
 }
 
+export async function getSnippetById(userId: string, snippetId: string) {
+  return safeDbQuery(
+    () =>
+      db
+        .select()
+        .from(snippets)
+        .where(and(eq(snippets.id, snippetId), eq(snippets.userId, userId)))
+        .limit(1)
+        .then((results) => results[0] || null),
+    null
+  );
+}
+
 export async function getSnippetStats(userId: string) {
   const allSnippets = await getSnippetsByUserId(userId);
 
