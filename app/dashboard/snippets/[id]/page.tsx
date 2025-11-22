@@ -3,19 +3,14 @@ import { redirect, notFound } from "next/navigation";
 import { getSnippetById } from "@/lib/db/snippets";
 import { DeleteSnippetDialog } from "@/components/snippets/delete-snippet-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CodeEditor } from "@/components/snippets/code-editor";
 import { Star, Edit, Calendar, Clock } from "lucide-react";
 import Link from "next/link";
 import { CopyButton } from "@/components/snippets/copy-button";
 import { FavoriteButton } from "@/components/snippets/favorite-button";
+import { SnippetAiAssistant } from "@/components/snippets/snippet-ai-assistant";
 
 interface SnippetDetailPageProps {
   params: Promise<{
@@ -38,7 +33,7 @@ export default async function SnippetDetailPage({
   try {
     const resolvedParams = await params;
     id = resolvedParams.id;
-    
+
     if (!id || typeof id !== "string") {
       notFound();
     }
@@ -51,19 +46,16 @@ export default async function SnippetDetailPage({
 
     snippet = fetchedSnippet;
   } catch (error) {
-    // Ignore React cancellation errors (these are expected during navigation)
     if (
       error &&
       typeof error === "object" &&
       "type" in error &&
       error.type === "cancelation"
     ) {
-      // This is a React cancellation - expected during navigation, ignore it
-      throw error; // Re-throw to let React handle it
+      throw error;
     }
 
     console.error("Error loading snippet:", error);
-    // Log the full error for debugging
     if (error instanceof Error) {
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
@@ -74,10 +66,8 @@ export default async function SnippetDetailPage({
   const contentToDisplay =
     snippet.type === "command" ? snippet.command : snippet.content;
 
-  // Ensure isFavorite is always a boolean
   const isFavorite = Boolean(snippet.isFavorite ?? false);
 
-  // Helper function to safely format dates
   const formatDate = (date: Date | string | null | undefined): string => {
     if (!date) return "Unknown";
     try {
@@ -94,7 +84,9 @@ export default async function SnippetDetailPage({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold tracking-tight">{snippet.title}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {snippet.title}
+            </h1>
             {isFavorite && (
               <Star className="size-5 fill-yellow-500 text-yellow-500" />
             )}
@@ -152,13 +144,20 @@ export default async function SnippetDetailPage({
                 />
               ) : (
                 <div className="rounded-md border border-border bg-muted/50 p-4">
-                  <pre className="whitespace-pre-wrap break-words text-sm">
+                  <pre className="whitespace-pre-wrap word text-sm">
                     {contentToDisplay || "No content"}
                   </pre>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          <SnippetAiAssistant
+            snippetContent={contentToDisplay || ""}
+            language={snippet.type === "code" ? snippet.language : null}
+            snippetTitle={snippet.title}
+            snippetType={snippet.type}
+          />
         </div>
 
         <div className="space-y-6">
@@ -241,4 +240,3 @@ export default async function SnippetDetailPage({
     </div>
   );
 }
-

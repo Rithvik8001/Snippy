@@ -14,18 +14,16 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Ignore React cancellation errors (these are expected during navigation)
     const errorObj = error as { type?: string; message?: string };
     if (errorObj.type === "cancelation") {
-      return; // Don't log cancellation errors - they're expected
+      return;
     }
     console.error("Snippet detail page error:", error);
   }, [error]);
 
-  // Don't show error UI for cancellation errors - they're expected
   const errorObj = error as { type?: string; message?: string };
   if (errorObj.type === "cancelation") {
-    return null; // Don't render anything for cancellation errors
+    return null;
   }
 
   return (
@@ -54,4 +52,3 @@ export default function Error({
     </div>
   );
 }
-
