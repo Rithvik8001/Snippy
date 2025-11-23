@@ -20,18 +20,47 @@ interface SnippetsPageProps {
   }>;
 }
 
-function filterSnippets(
-  snippets: Snippet[],
-  search?: string
-): Snippet[] {
+function filterSnippets(snippets: Snippet[], search?: string): Snippet[] {
   if (!search) return snippets;
 
-  const query = search.toLowerCase();
-  return snippets.filter(
-    (snippet) =>
-      snippet.title.toLowerCase().includes(query) ||
-      snippet.tags.some((tag) => tag.toLowerCase().includes(query))
-  );
+  const query = search.toLowerCase().trim();
+  if (!query) return snippets;
+
+  // Split query into keywords (space-separated)
+  const keywords = query.split(/\s+/).filter((kw) => kw.length > 0);
+
+  return snippets.filter((snippet) => {
+    const titleLower = snippet.title.toLowerCase();
+    const tagsLower = snippet.tags.map((tag) => tag.toLowerCase());
+
+    // Get content to search (content field for code/text, command field for commands)
+    const contentLower = (
+      snippet.content ||
+      snippet.command ||
+      ""
+    ).toLowerCase();
+
+    // Also check language and framework
+    const languageLower = (snippet.language || "").toLowerCase();
+    const frameworkLower = (snippet.framework || "").toLowerCase();
+
+    // Check if snippet matches keywords
+    // Use flexible matching: snippet matches if it contains at least one keyword
+    // AND has a high match score (at least 50% of keywords match)
+    const matchCount = keywords.filter((keyword) => {
+      return (
+        titleLower.includes(keyword) ||
+        tagsLower.some((tag) => tag.includes(keyword)) ||
+        contentLower.includes(keyword) ||
+        languageLower.includes(keyword) ||
+        frameworkLower.includes(keyword)
+      );
+    }).length;
+
+    // Match if at least 50% of keywords are found (or at least 1 keyword)
+    const matchThreshold = Math.max(1, Math.ceil(keywords.length * 0.5));
+    return matchCount >= matchThreshold;
+  });
 }
 
 export default async function SnippetsPage({
@@ -102,4 +131,3 @@ export default async function SnippetsPage({
     </div>
   );
 }
-

@@ -11,8 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Search, X, Star } from "lucide-react";
+import { Search, X, Star, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface SnippetsFiltersProps {
   defaultType?: string;
@@ -32,6 +33,8 @@ export function SnippetsFilters({
   const [debouncedSearch, setDebouncedSearch] = useState(
     urlSearch || defaultSearch || ""
   );
+  const [isExtractingKeywords, setIsExtractingKeywords] = useState(false);
+  const [isAiEnhanced, setIsAiEnhanced] = useState(false);
 
   // Debounce search input
   useEffect(() => {
@@ -41,6 +44,56 @@ export function SnippetsFilters({
 
     return () => clearTimeout(timer);
   }, [search]);
+
+  const extractKeywords = async (query: string) => {
+    if (!query || query.trim().length === 0) return;
+
+    // Only use AI for longer queries (more than 2 words)
+    const wordCount = query.trim().split(/\s+/).length;
+    if (wordCount <= 2) {
+      return;
+    }
+
+    setIsExtractingKeywords(true);
+    try {
+      const response = await fetch("/api/search/extract-keywords", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to extract keywords");
+      }
+
+      const data = await response.json();
+      if (data.keywords && data.keywords.length > 0) {
+        const extractedKeywords = data.keywords.join(" ");
+        setSearch(extractedKeywords);
+        setIsAiEnhanced(true);
+        toast.success("AI enhanced your search", {
+          description: `Searching for: ${extractedKeywords}`,
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Keyword extraction error:", error);
+      // Silently fail - user can still search normally
+    } finally {
+      setIsExtractingKeywords(false);
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && search.trim().length > 0) {
+      const wordCount = search.trim().split(/\s+/).length;
+      if (wordCount > 2) {
+        extractKeywords(search);
+      }
+    }
+  };
 
   // Update URL when search changes
   useEffect(() => {
@@ -55,6 +108,7 @@ export function SnippetsFilters({
       params.set("search", debouncedSearch);
     } else {
       params.delete("search");
+      setIsAiEnhanced(false);
     }
 
     const newSearch = params.toString();
@@ -90,6 +144,7 @@ export function SnippetsFilters({
 
   const handleClearFilters = () => {
     setSearch("");
+    setIsAiEnhanced(false);
     router.push("/dashboard/snippets", { scroll: false });
   };
 
@@ -105,11 +160,26 @@ export function SnippetsFilters({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search snippets by title or tags..."
+            placeholder="Search snippets by title or tags... (Press Enter for AI search)"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setIsAiEnhanced(false);
+            }}
+            onKeyDown={handleSearchKeyDown}
+            className={cn("pl-9", isAiEnhanced && "pr-20")}
+            disabled={isExtractingKeywords}
           />
+          {isExtractingKeywords && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+            </div>
+          )}
+          {isAiEnhanced && !isExtractingKeywords && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Sparkles className="size-4 text-primary" />
+            </div>
+          )}
         </div>
         <Select value={currentType} onValueChange={handleTypeChange}>
           <SelectTrigger className="w-[140px]">
