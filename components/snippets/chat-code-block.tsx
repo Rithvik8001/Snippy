@@ -62,7 +62,7 @@ export function ChatCodeBlock({
   };
 
   return (
-    <div className={cn("space-y-0", className)}>
+    <div className={cn("space-y-0 my-4", className)}>
       <div className="flex items-center justify-between rounded-t-md border border-b-0 border-border bg-muted/50 px-3 py-2">
         <div className="flex items-center gap-2">
           {language && (
@@ -76,7 +76,7 @@ export function ChatCodeBlock({
             variant="ghost"
             size="sm"
             onClick={handleCopy}
-            className="h-7 gap-1.5"
+            className="h-7 gap-1.5 text-foreground hover:bg-muted"
           >
             {copied ? (
               <>
@@ -94,14 +94,14 @@ export function ChatCodeBlock({
             variant="ghost"
             size="sm"
             onClick={handleSaveAsNew}
-            className="h-7 gap-1.5"
+            className="h-7 gap-1.5 text-foreground hover:bg-muted"
           >
             <Save className="size-3" />
             Save as New
           </Button>
         </div>
       </div>
-      <div className="[&>div]:rounded-t-none [&>div]:border-t-0">
+      <div className="[&>div]:rounded-t-none [&>div]:border-t-0 [&>div>div]:border-t-0">
         <CodeEditor value={code} language={language} readOnly={true} />
       </div>
     </div>

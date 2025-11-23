@@ -11,6 +11,7 @@ import Link from "next/link";
 import { CopyButton } from "@/components/snippets/copy-button";
 import { FavoriteButton } from "@/components/snippets/favorite-button";
 import { SnippetAiAssistant } from "@/components/snippets/snippet-ai-assistant";
+import { ConvertSnippetButton } from "@/components/snippets/convert-snippet-button";
 
 interface SnippetDetailPageProps {
   params: Promise<{
@@ -102,6 +103,13 @@ export default async function SnippetDetailPage({
           </p>
         </div>
         <div className="flex gap-2">
+          {snippet.type === "code" && (
+            <ConvertSnippetButton
+              snippetContent={contentToDisplay || ""}
+              language={snippet.language}
+              snippetType={snippet.type}
+            />
+          )}
           <FavoriteButton
             snippetId={id}
             isFavorite={isFavorite}
