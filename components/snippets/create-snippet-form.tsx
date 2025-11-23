@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
   createSnippetSchema,
@@ -19,22 +19,31 @@ import { CommandSnippetFields } from "./command-snippet-fields";
 
 import type { SnippetFormData } from "./form-types";
 
-export function CreateSnippetForm() {
+interface CreateSnippetFormProps {
+  initialValues?: {
+    type?: "code" | "text" | "command";
+    content?: string;
+    language?: string;
+  };
+}
+
+export function CreateSnippetForm({ initialValues }: CreateSnippetFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [snippetType, setSnippetType] = useState<"code" | "text" | "command">(
-    "code"
+    initialValues?.type || "code"
   );
 
   const form = useForm<SnippetFormData>({
     defaultValues: {
-      type: "code",
+      type: initialValues?.type || "code",
       title: "",
       tags: [],
-      content: "",
-      language: "",
+      content: initialValues?.content || "",
+      language: initialValues?.language || "",
       framework: "",
-      command: "",
+      command:
+        initialValues?.type === "command" ? initialValues?.content || "" : "",
     },
     mode: "onChange",
     shouldUnregister: false,
@@ -225,6 +234,27 @@ export function CreateSnippetForm() {
       form.setValue("command", "");
     }
   };
+
+  // Update form when initialValues change (e.g., from URL params)
+  useEffect(() => {
+    if (initialValues) {
+      if (initialValues.type) {
+        setSnippetType(initialValues.type);
+        form.setValue("type", initialValues.type);
+      }
+      if (initialValues.content) {
+        if (initialValues.type === "command") {
+          form.setValue("command", initialValues.content);
+        } else {
+          form.setValue("content", initialValues.content);
+        }
+      }
+      if (initialValues.language) {
+        form.setValue("language", initialValues.language);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialValues]);
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

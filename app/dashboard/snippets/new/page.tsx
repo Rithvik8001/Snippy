@@ -3,12 +3,29 @@ import { currentUser } from "@clerk/nextjs/server";
 import { CreateSnippetForm } from "@/components/snippets/create-snippet-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function NewSnippetPage() {
+interface NewSnippetPageProps {
+  searchParams: Promise<{
+    type?: string;
+    content?: string;
+    language?: string;
+  }>;
+}
+
+export default async function NewSnippetPage({
+  searchParams,
+}: NewSnippetPageProps) {
   const user = await currentUser();
 
   if (!user) {
     redirect("/sign-in");
   }
+
+  const params = await searchParams;
+  const initialValues = {
+    type: (params.type as "code" | "text" | "command") || undefined,
+    content: params.content || undefined,
+    language: params.language || undefined,
+  };
 
   return (
     <div className="space-y-6">
@@ -27,7 +44,7 @@ export default async function NewSnippetPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CreateSnippetForm />
+          <CreateSnippetForm initialValues={initialValues} />
         </CardContent>
       </Card>
     </div>

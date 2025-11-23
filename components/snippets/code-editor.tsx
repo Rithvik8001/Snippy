@@ -12,6 +12,8 @@ interface CodeEditorProps {
   readOnly?: boolean;
 }
 
+const defaultLanguage = "typescript";
+
 const languageMap: Record<string, string> = {
   javascript: "javascript",
   typescript: "typescript",
@@ -53,7 +55,7 @@ export function CodeEditor({
   const isDark = resolvedTheme === "dark" || theme === "dark";
 
   const monacoLanguage = language
-    ? languageMap[language] || "typescript"
+    ? languageMap[language] || defaultLanguage
     : "typescript";
 
   useEffect(() => {
@@ -121,15 +123,12 @@ export function CodeEditor({
     }
   }, [monaco, isDark]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (editorRef.current) {
         try {
           editorRef.current.dispose();
-        } catch (error) {
-          // Ignore errors during cleanup
-        }
+        } catch {}
       }
     };
   }, []);
@@ -156,7 +155,7 @@ export function CodeEditor({
             lineNumbers: "on",
             roundedSelection: false,
             scrollBeyondLastLine: false,
-                readOnly: readOnly,
+            readOnly: readOnly,
             automaticLayout: true,
             tabSize: 2,
             wordWrap: "on",

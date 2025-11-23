@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useChat, Chat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,8 +14,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Bot, User, Sparkles, Loader2, Send } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Bot, User, Sparkles, Loader2, Send, Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ChatCodeBlock } from "./chat-code-block";
+import { toast } from "sonner";
 
 interface SnippetAiAssistantProps {
   snippetContent: string;
@@ -21,6 +32,29 @@ interface SnippetAiAssistantProps {
   snippetTitle: string;
   snippetType: "code" | "text" | "command";
 }
+
+const CONVERSION_LANGUAGES = [
+  "typescript",
+  "javascript",
+  "python",
+  "rust",
+  "go",
+  "java",
+  "cpp",
+  "c",
+  "csharp",
+  "swift",
+  "kotlin",
+  "ruby",
+  "php",
+  "dart",
+  "scala",
+  "haskell",
+  "elixir",
+  "clojure",
+  "lua",
+  "perl",
+] as const;
 
 export function SnippetAiAssistant({
   snippetContent,
@@ -31,6 +65,7 @@ export function SnippetAiAssistant({
   const [isOpen, setIsOpen] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [localInput, setLocalInput] = useState("");
+  const [targetLanguage, setTargetLanguage] = useState<string>("typescript");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const chat = useMemo(
@@ -110,6 +145,24 @@ Please provide a clear, concise explanation of what this snippet does and why it
     }
   };
 
+  const handleConvert = () => {
+    if (snippetType !== "code") {
+      toast.error("Conversion is only available for code snippets");
+      return;
+    }
+
+    const currentLanguage = language || "code";
+    const convertPrompt = `Convert this ${currentLanguage} code snippet to ${targetLanguage}:
+
+\`\`\`${currentLanguage}
+${snippetContent}
+\`\`\`
+
+Please provide the converted code in a code block with the language tag "${targetLanguage}". Include a brief explanation of any significant changes or considerations.`;
+
+    sendMessage({ text: convertPrompt });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -123,13 +176,43 @@ Please provide a clear, concise explanation of what this snippet does and why it
               </CardDescription>
             </div>
           </div>
-          <Button
-            variant={isOpen ? "outline" : "default"}
-            onClick={handleToggle}
-            size="sm"
-          >
-            {isOpen ? "Hide" : "Explain with AI"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {isOpen && snippetType === "code" && (
+              <div className="flex items-center gap-2">
+                <Select
+                  value={targetLanguage}
+                  onValueChange={setTargetLanguage}
+                >
+                  <SelectTrigger className="w-[140px]" size="sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CONVERSION_LANGUAGES.map((lang) => (
+                      <SelectItem key={lang} value={lang}>
+                        {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleConvert}
+                  disabled={isLoading}
+                >
+                  <Code2 className="mr-2 size-4" />
+                  Convert
+                </Button>
+              </div>
+            )}
+            <Button
+              variant={isOpen ? "outline" : "default"}
+              onClick={handleToggle}
+              size="sm"
+            >
+              {isOpen ? "Hide" : "Explain with AI"}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       {isOpen && (
@@ -168,9 +251,103 @@ Please provide a clear, concise explanation of what this snippet does and why it
                       return (
                         <div
                           key={`${message.id}-${i}`}
-                          className="whitespace-pre-wrap wrap-break-word text-sm"
+                          className="text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                         >
-                          {part.text}
+                          <ReactMarkdown
+                            rehypePlugins={[rehypeHighlight]}
+                            components={{
+                              code: ({ className, children, ...props }) => {
+                                const match = /language-(\w+)/.exec(
+                                  className || ""
+                                );
+                                const codeLanguage = match ? match[1] : "";
+                                const codeString = String(children).replace(
+                                  /\n$/,
+                                  ""
+                                );
+                                const isInline = !className || !match;
+
+                                if (!isInline && codeString) {
+                                  return (
+                                    <ChatCodeBlock
+                                      code={codeString}
+                                      language={codeLanguage}
+                                    />
+                                  );
+                                }
+
+                                return (
+                                  <code
+                                    className={cn(
+                                      "rounded bg-muted px-1.5 py-0.5 text-sm font-mono",
+                                      className
+                                    )}
+                                    {...props}
+                                  >
+                                    {children}
+                                  </code>
+                                );
+                              },
+                              p: ({ children }) => (
+                                <p className="mb-2 last:mb-0 leading-relaxed">
+                                  {children}
+                                </p>
+                              ),
+                              ul: ({ children }) => (
+                                <ul className="mb-2 ml-4 list-disc last:mb-0 space-y-1">
+                                  {children}
+                                </ul>
+                              ),
+                              ol: ({ children }) => (
+                                <ol className="mb-2 ml-4 list-decimal last:mb-0 space-y-1">
+                                  {children}
+                                </ol>
+                              ),
+                              li: ({ children }) => (
+                                <li className="mb-1 last:mb-0">{children}</li>
+                              ),
+                              strong: ({ children }) => (
+                                <strong className="font-semibold">
+                                  {children}
+                                </strong>
+                              ),
+                              em: ({ children }) => (
+                                <em className="italic">{children}</em>
+                              ),
+                              h1: ({ children }) => (
+                                <h1 className="text-lg font-bold mb-2 mt-3 first:mt-0">
+                                  {children}
+                                </h1>
+                              ),
+                              h2: ({ children }) => (
+                                <h2 className="text-base font-semibold mb-2 mt-3 first:mt-0">
+                                  {children}
+                                </h2>
+                              ),
+                              h3: ({ children }) => (
+                                <h3 className="text-sm font-semibold mb-1 mt-2 first:mt-0">
+                                  {children}
+                                </h3>
+                              ),
+                              blockquote: ({ children }) => (
+                                <blockquote className="border-l-4 border-border pl-4 italic my-2">
+                                  {children}
+                                </blockquote>
+                              ),
+                              a: ({ children, href }) => (
+                                <a
+                                  href={href}
+                                  className="text-primary underline hover:text-primary/80"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {children}
+                                </a>
+                              ),
+                            }}
+                          >
+                            {part.text}
+                          </ReactMarkdown>
                         </div>
                       );
                     }
