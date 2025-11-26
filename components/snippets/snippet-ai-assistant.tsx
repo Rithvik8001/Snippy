@@ -223,13 +223,16 @@ Please provide a clear, concise explanation of what this snippet does and why it
             variant={isOpen ? "outline" : "default"}
             onClick={handleToggle}
             size="sm"
+            aria-label={isOpen ? "Hide AI assistant" : "Show AI assistant"}
+            aria-expanded={isOpen}
+            aria-controls="ai-assistant-content"
           >
             {isOpen ? "Hide" : "Explain with AI"}
           </Button>
         </div>
       </CardHeader>
       {isOpen && (
-        <CardContent className="space-y-4">
+        <CardContent id="ai-assistant-content" className="space-y-4" aria-live="polite" aria-atomic="false">
           <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto p-4 border border-border rounded-md bg-muted/30">
             {messages.length === 0 && status !== "streaming" && (
               <div className="text-center text-muted-foreground py-8">
@@ -301,21 +304,37 @@ Please provide a clear, concise explanation of what this snippet does and why it
           </div>
 
           <form onSubmit={onSubmit} className="flex gap-2">
+            <label htmlFor="ai-chat-input" className="sr-only">
+              Ask a question about this snippet
+            </label>
             <Input
+              id="ai-chat-input"
               value={localInput}
               onChange={handleLocalInputChange}
               placeholder="Ask a follow-up question..."
               disabled={isLoading}
               className="flex-1"
+              aria-label="Ask a question about this snippet"
+              aria-describedby="ai-chat-help"
             />
+            <span id="ai-chat-help" className="sr-only">
+              Type your question and press Enter or click Send
+            </span>
             <Button
               type="submit"
               disabled={isLoading || !localInput || !localInput.trim()}
+              aria-label="Send message"
             >
               {isLoading ? (
-                <Loader2 className="size-4 animate-spin" />
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  <span className="sr-only">Sending message</span>
+                </>
               ) : (
-                <Send className="size-4" />
+                <>
+                  <Send className="size-4" aria-hidden="true" />
+                  <span className="sr-only">Send</span>
+                </>
               )}
             </Button>
           </form>

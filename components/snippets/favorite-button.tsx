@@ -66,12 +66,20 @@ export function FavoriteButton({
         currentFavorite &&
           "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-600 dark:text-yellow-500 border-yellow-500/20"
       )}
+      aria-label={
+        currentFavorite
+          ? "Remove from favorites"
+          : "Add to favorites"
+      }
+      aria-pressed={currentFavorite}
+      aria-busy={isToggling}
     >
       <Star
         className={cn(
           "size-4",
           currentFavorite && "fill-yellow-500 text-yellow-500"
         )}
+        aria-hidden="true"
       />
       {size !== "icon" && (
         <span>{currentFavorite ? "Favorited" : "Favorite"}</span>

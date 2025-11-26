@@ -36,15 +36,17 @@ export function CopyButton({ content, snippetId }: CopyButtonProps) {
       size="sm"
       onClick={handleCopy}
       className="gap-2"
+      aria-label={copied ? "Copied to clipboard" : "Copy snippet content"}
+      aria-pressed={copied}
     >
       {copied ? (
         <>
-          <Check className="size-4" />
+          <Check className="size-4" aria-hidden="true" />
           Copied
         </>
       ) : (
         <>
-          <Copy className="size-4" />
+          <Copy className="size-4" aria-hidden="true" />
           Copy
         </>
       )}

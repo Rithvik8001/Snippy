@@ -6,10 +6,10 @@ import {
   getFavoriteSnippets,
 } from "@/lib/db/snippets";
 import { SnippetsGrid } from "@/components/snippets/snippets-grid";
-import { SnippetsFilters } from "@/components/snippets/snippets-filters";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import Link from "next/link";
+import { SnippetsFiltersWithNav } from "@/components/snippets/snippets-filters-with-nav";
+import { ExportSnippetsButton } from "@/components/snippets/export-snippets-button";
+import { ImportSnippetsDialog } from "@/components/snippets/import-snippets-dialog";
+import { NewSnippetButton } from "@/components/snippets/new-snippet-button";
 import type { Snippet } from "@/db/models/snippets";
 
 interface SnippetsPageProps {
@@ -99,15 +99,14 @@ export default async function SnippetsPage({
             Manage and organize your code, text, and command snippets
           </p>
         </div>
-        <Button asChild size="lg">
-          <Link href="/dashboard/snippets/new">
-            <Plus className="mr-2 size-4" />
-            New Snippet
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ImportSnippetsDialog />
+          <ExportSnippetsButton />
+          <NewSnippetButton />
+        </div>
       </div>
 
-      <SnippetsFilters
+      <SnippetsFiltersWithNav
         defaultType={type}
         defaultFavorite={favorite}
         defaultSearch={search}

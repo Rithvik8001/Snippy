@@ -60,16 +60,16 @@ export function DeleteSnippetDialog({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         {trigger || (
-          <Button variant="destructive" size="sm">
-            <Trash2 className="mr-2 size-4" />
+          <Button variant="destructive" size="sm" aria-label={`Delete snippet: ${snippetTitle}`}>
+            <Trash2 className="mr-2 size-4" aria-hidden="true" />
             Delete
           </Button>
         )}
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent aria-describedby="delete-description">
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Snippet</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription id="delete-description">
             Are you sure you want to delete "{snippetTitle}"? This action cannot
             be undone.
           </AlertDialogDescription>
@@ -80,8 +80,14 @@ export function DeleteSnippetDialog({
             onClick={handleDelete}
             disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            aria-busy={isDeleting}
           >
-            {isDeleting && <Loader2 className="mr-2 size-4 animate-spin" />}
+            {isDeleting && (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+                <span className="sr-only">Deleting snippet</span>
+              </>
+            )}
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>

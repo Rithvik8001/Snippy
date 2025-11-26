@@ -15,9 +15,9 @@ export default function DashboardLayout({
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4" />
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
+        <main id="main-content" className="flex flex-1 flex-col gap-4 p-4 md:p-6">
           {children}
-        </div>
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

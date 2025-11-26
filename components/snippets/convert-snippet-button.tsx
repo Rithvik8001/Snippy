@@ -191,7 +191,7 @@ Please provide ONLY the converted code in a code block with the language tag "${
   return (
     <div className="flex items-center gap-2">
       <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-        <SelectTrigger className="w-[140px]" size="sm">
+        <SelectTrigger className="w-[140px]" size="sm" aria-label="Select target language for conversion">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -207,15 +207,18 @@ Please provide ONLY the converted code in a code block with the language tag "${
         size="sm"
         onClick={handleConvert}
         disabled={isConverting}
+        aria-label={`Convert snippet to ${targetLanguage}`}
+        aria-busy={isConverting}
       >
         {isConverting ? (
           <>
-            <Loader2 className="mr-2 size-4 animate-spin" />
+            <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+            <span className="sr-only">Converting snippet</span>
             Converting...
           </>
         ) : (
           <>
-            <Code2 className="mr-2 size-4" />
+            <Code2 className="mr-2 size-4" aria-hidden="true" />
             Convert
           </>
         )}

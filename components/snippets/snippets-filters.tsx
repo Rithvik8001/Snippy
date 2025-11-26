@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Search, X, Star, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Kbd, useModifierKey } from "@/components/ui/kbd";
 
 interface SnippetsFiltersProps {
   defaultType?: string;
@@ -35,6 +36,7 @@ export function SnippetsFilters({
   );
   const [isExtractingKeywords, setIsExtractingKeywords] = useState(false);
   const [isAiEnhanced, setIsAiEnhanced] = useState(false);
+  const modifierKey = useModifierKey();
 
   // Debounce search input
   useEffect(() => {
@@ -154,11 +156,21 @@ export function SnippetsFilters({
     currentType !== "all" || isFavorite || debouncedSearch.length > 0;
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div
+      role="search"
+      className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+    >
       <div className="flex flex-1 gap-2">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <label htmlFor="snippet-search" className="sr-only">
+            Search snippets
+          </label>
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
+            id="snippet-search"
             type="text"
             placeholder="Search snippets by title or tags... (Press Enter for AI search)"
             value={search}
@@ -167,22 +179,30 @@ export function SnippetsFilters({
               setIsAiEnhanced(false);
             }}
             onKeyDown={handleSearchKeyDown}
-            className={cn("pl-9", isAiEnhanced && "pr-20")}
+            className={cn("pl-9 pr-20", isAiEnhanced && "pr-32")}
             disabled={isExtractingKeywords}
+            aria-label="Search snippets by title or tags"
+            aria-describedby="search-help"
+            aria-busy={isExtractingKeywords}
           />
-          {isExtractingKeywords && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-            </div>
-          )}
-          {isAiEnhanced && !isExtractingKeywords && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Sparkles className="size-4 text-primary" />
-            </div>
-          )}
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            {isExtractingKeywords ? (
+              <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden="true" />
+            ) : (
+              <>
+                {isAiEnhanced && (
+                  <Sparkles className="size-4 text-primary" aria-label="AI enhanced search active" aria-hidden="true" />
+                )}
+                <Kbd keys={[modifierKey, "K"]} className="hidden sm:inline-flex" />
+              </>
+            )}
+          </div>
+          <span id="search-help" className="sr-only">
+            Press Enter to enhance search with AI for queries longer than 2 words
+          </span>
         </div>
         <Select value={currentType} onValueChange={handleTypeChange}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[140px]" aria-label="Filter by snippet type">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
@@ -197,12 +217,15 @@ export function SnippetsFilters({
           size="default"
           onClick={handleFavoriteToggle}
           className="shrink-0"
+          aria-label={isFavorite ? "Show all snippets" : "Show only favorites"}
+          aria-pressed={isFavorite}
         >
           <Star
             className={cn(
               "size-4 mr-2",
               isFavorite && "fill-yellow-500 text-yellow-500"
             )}
+            aria-hidden="true"
           />
           Favorites
         </Button>
@@ -212,8 +235,9 @@ export function SnippetsFilters({
             size="default"
             onClick={handleClearFilters}
             className="shrink-0"
+            aria-label="Clear all filters"
           >
-            <X className="size-4 mr-2" />
+            <X className="size-4 mr-2" aria-hidden="true" />
             Clear
           </Button>
         )}
